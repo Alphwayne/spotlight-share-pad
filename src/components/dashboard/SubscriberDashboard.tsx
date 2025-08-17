@@ -21,7 +21,7 @@ interface Subscription {
   owner_id: string;
   status: string;
   expires_at: string | null;
-  owner: {
+  profiles: {
     nickname: string;
     profile_picture_url: string;
     email: string;
@@ -48,7 +48,7 @@ export const SubscriberDashboard = () => {
           owner_id,
           status,
           expires_at,
-          owner:owner_id (
+          profiles!subscriptions_owner_id_fkey (
             nickname,
             profile_picture_url,
             email
@@ -149,13 +149,13 @@ export const SubscriberDashboard = () => {
               <Card key={subscription.id} className="glass-effect border-primary/20 hover:border-primary/40 transition-all duration-300 hover:scale-105">
                 <CardHeader className="text-center">
                   <Avatar className="w-20 h-20 mx-auto mb-4">
-                    <AvatarImage src={subscription.owner.profile_picture_url} />
+                    <AvatarImage src={subscription.profiles.profile_picture_url} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-luxury text-white text-xl">
-                      {subscription.owner.nickname?.[0] || subscription.owner.email[0].toUpperCase()}
+                      {subscription.profiles.nickname?.[0] || subscription.profiles.email[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <CardTitle className="gradient-text">
-                    {subscription.owner.nickname || 'Creator'}
+                    {subscription.profiles.nickname || 'Creator'}
                   </CardTitle>
                   <CardDescription>
                     <Badge variant="outline" className="border-success text-success">
