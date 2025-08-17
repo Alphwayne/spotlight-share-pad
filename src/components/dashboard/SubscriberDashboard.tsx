@@ -24,7 +24,6 @@ interface Subscription {
   profiles: {
     nickname: string;
     profile_picture_url: string;
-    email: string;
   };
 }
 
@@ -50,8 +49,7 @@ export const SubscriberDashboard = () => {
           expires_at,
           profiles!subscriptions_owner_id_fkey (
             nickname,
-            profile_picture_url,
-            email
+            profile_picture_url
           )
         `)
         .eq('subscriber_id', profile.id)
@@ -151,7 +149,7 @@ export const SubscriberDashboard = () => {
                   <Avatar className="w-20 h-20 mx-auto mb-4">
                     <AvatarImage src={subscription.profiles.profile_picture_url} />
                     <AvatarFallback className="bg-gradient-to-br from-primary to-luxury text-white text-xl">
-                      {subscription.profiles.nickname?.[0] || subscription.profiles.email[0].toUpperCase()}
+                      {subscription.profiles.nickname?.[0] || 'C'}
                     </AvatarFallback>
                   </Avatar>
                   <CardTitle className="gradient-text">
