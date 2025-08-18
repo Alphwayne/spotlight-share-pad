@@ -1,96 +1,206 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Crown, Sparkles } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+import dirtyDesireLogo from "@/assets/dirty-desire-logo.png";
 
 const Auth = () => {
-  const { user, signIn, signUp } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [resetLoading, setResetLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "signin");
 
-  // Redirect if already authenticated
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
-  const handleSubmit = async (e: React.FormEvent, isSignUp: boolean) => {
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (loading) return;
 
-    const { error } = isSignUp
-      ? await signUp(formData.email, formData.password)
-      : await signIn(formData.email, formData.password);
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    setIsLoading(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Welcome back!");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    setLoading(true);
+    
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      toast.success("Please check your email to confirm your account!");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetLoading) return;
+
+    setResetLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?tab=reset-password`,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Password updated successfully!");
+      navigate("/");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-luxury/5 flex items-center justify-center p-4">
-      <div className="absolute inset-0 opacity-30">
-        <div className="h-full w-full bg-gradient-to-br from-primary/10 via-transparent to-luxury/10" />
-      </div>
-      
-      <Card className="w-full max-w-md relative glass-effect border-primary/20 animate-glow">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary to-luxury rounded-full flex items-center justify-center animate-float">
-            <Crown className="w-10 h-10 text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src={dirtyDesireLogo} alt="Dirty Desire" className="w-16 h-16 object-contain" />
           </div>
-          <div>
-            <CardTitle className="text-3xl gradient-text">Welcome</CardTitle>
-            <CardDescription className="text-lg">
-              Enter your exclusive space
-            </CardDescription>
-          </div>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Dirty Desire
+          </CardTitle>
+          <CardDescription>Premium content platform</CardDescription>
         </CardHeader>
-
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="signin" className="flex items-center gap-2">
-                <Crown className="w-4 h-4" />
-                Sign In
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Sign Up
-              </TabsTrigger>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="forgot">Reset</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="signin">
-              <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
+            
+            <TabsContent value="signin" className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <Input
                     id="signin-email"
                     type="email"
                     placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="transition-all duration-300 focus:scale-105"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Password</Label>
                   <div className="relative">
                     <Input
                       id="signin-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pr-10 transition-all duration-300 focus:scale-105"
                     />
                     <Button
                       type="button"
@@ -107,43 +217,53 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-luxury hover:from-primary-glow hover:to-luxury-light transition-all duration-300 transform hover:scale-105"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing In...' : 'Sign In'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Signing In..." : "Sign In"}
                 </Button>
+                <p className="text-sm text-center text-muted-foreground">
+                  Don't have an account?{" "}
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveTab("signup")}
+                    className="text-primary hover:underline"
+                  >
+                    Sign up
+                  </button>
+                  {" | "}
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveTab("forgot")}
+                    className="text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </p>
               </form>
             </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-6">
+            
+            <TabsContent value="signup" className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
                     placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="transition-all duration-300 focus:scale-105"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Input
                       id="signup-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Create a password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="pr-10 transition-all duration-300 focus:scale-105"
                     />
                     <Button
                       type="button"
@@ -160,13 +280,77 @@ const Auth = () => {
                     </Button>
                   </div>
                 </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Creating Account..." : "Create Account"}
+                </Button>
+                <p className="text-sm text-center text-muted-foreground">
+                  Already have an account?{" "}
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveTab("signin")}
+                    className="text-primary hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="forgot" className="space-y-4">
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={resetLoading}>
+                  {resetLoading ? "Sending..." : "Send Reset Email"}
+                </Button>
+                <p className="text-sm text-center text-muted-foreground">
+                  Remember your password?{" "}
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveTab("signin")}
+                    className="text-primary hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </form>
+            </TabsContent>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-luxury to-primary hover:from-luxury-light hover:to-primary-glow transition-all duration-300 transform hover:scale-105"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
+            <TabsContent value="reset-password" className="space-y-4">
+              <form onSubmit={handleNewPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Updating..." : "Update Password"}
                 </Button>
               </form>
             </TabsContent>

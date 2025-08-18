@@ -18,6 +18,7 @@ import {
   Database
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { AdminUserManagement } from '@/components/admin/AdminUserManagement';
 
 interface AdminStats {
   totalUsers: number;
@@ -306,15 +307,7 @@ export const AdminDashboard = () => {
               <h3 className="text-2xl font-bold mb-2">User Management</h3>
               <p className="text-muted-foreground">Manage platform users and permissions</p>
             </div>
-
-            <Card className="glass-effect">
-              <CardContent className="p-6">
-                <div className="text-center text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>User management interface coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
+            <AdminUserManagement />
           </TabsContent>
 
           <TabsContent value="content" className="space-y-6">
