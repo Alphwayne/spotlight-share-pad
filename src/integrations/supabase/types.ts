@@ -323,7 +323,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      content_type: "image" | "video"
+      content_type: "image" | "video" | "audio" | "document"
       subscription_status: "active" | "expired" | "pending"
       user_role: "owner" | "subscriber" | "admin"
     }
@@ -453,7 +453,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      content_type: ["image", "video"],
+      content_type: ["image", "video", "audio", "document"],
       subscription_status: ["active", "expired", "pending"],
       user_role: ["owner", "subscriber", "admin"],
     },

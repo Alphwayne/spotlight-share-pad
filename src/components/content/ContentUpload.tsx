@@ -86,7 +86,7 @@ export const ContentUpload: React.FC<ContentUploadProps> = ({ onUploadComplete }
           owner_id: profile.id,
           title: formData.title,
           description: formData.description,
-          content_type: formData.content_type,
+          content_type: formData.content_type as any,
           file_url: publicUrl,
           thumbnail_url: thumbnailUrl,
           is_preview: formData.is_preview,
