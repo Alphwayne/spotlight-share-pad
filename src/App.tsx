@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PasswordChange from "./pages/PasswordChange";
+import Preview from "./pages/Preview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/password-change" element={<PasswordChange />} />
+            <Route path="/preview/:linkCode" element={<Preview />} />
             <Route 
               path="/" 
               element={

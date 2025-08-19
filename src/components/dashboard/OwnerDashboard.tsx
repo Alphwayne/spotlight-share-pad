@@ -16,15 +16,22 @@ import {
   Settings,
   LogOut,
   Plus,
-  BarChart3
+  BarChart3,
+  User,
+  Sparkles,
+  Heart,
+  Star
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ContentUpload } from '@/components/content/ContentUpload';
+import { ProfileManagement } from '@/components/profile/ProfileManagement';
 
 export const OwnerDashboard = () => {
   const { user, profile, signOut } = useAuth();
   const [earnings, setEarnings] = useState(0);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [contentCount, setContentCount] = useState(0);
+  const [showUpload, setShowUpload] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -109,19 +116,28 @@ export const OwnerDashboard = () => {
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-luxury rounded-full flex items-center justify-center">
-              <Crown className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-primary via-luxury to-accent rounded-full flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 text-white animate-pulse" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold gradient-text">Creator Studio</h1>
-              <p className="text-sm text-muted-foreground">Welcome back, {profile?.nickname || 'Creator'}</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-luxury to-accent bg-clip-text text-transparent">
+                {profile?.nickname || 'Creator'}'s Empire
+              </h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Star className="w-3 h-3 text-luxury" />
+                Ruling your content kingdom
+                <Heart className="w-3 h-3 text-destructive animate-pulse" />
+              </p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <Avatar className="w-10 h-10">
+            <Badge variant="outline" className="border-luxury text-luxury">
+              Premium Creator
+            </Badge>
+            <Avatar className="w-10 h-10 ring-2 ring-primary/20">
               <AvatarImage src={profile?.profile_picture_url} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-luxury text-white">
                 {profile?.nickname?.[0] || profile?.email[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -171,8 +187,12 @@ export const OwnerDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="content" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Profile
+            </TabsTrigger>
             <TabsTrigger value="content" className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Content
@@ -191,29 +211,50 @@ export const OwnerDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="profile" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-luxury bg-clip-text text-transparent">
+                  Your Creator Profile
+                </h3>
+                <p className="text-muted-foreground">This is what your fans will see when they discover you</p>
+              </div>
+              <Button onClick={generateShareLink} variant="outline" className="flex items-center gap-2">
+                <Share2 className="w-4 h-4" />
+                Generate Share Link
+              </Button>
+            </div>
+
+            <ProfileManagement />
+          </TabsContent>
+
           <TabsContent value="content" className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold">Your Content</h3>
-                <p className="text-muted-foreground">Manage your photos and videos</p>
+                <h3 className="text-2xl font-bold">Your Content Empire</h3>
+                <p className="text-muted-foreground">Create and manage your exclusive content</p>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={generateShareLink} variant="outline" className="flex items-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Generate Share Link
-                </Button>
-                <Button className="flex items-center gap-2 bg-gradient-to-r from-primary to-luxury">
-                  <Plus className="w-4 h-4" />
-                  Upload Content
-                </Button>
-              </div>
+              <Button 
+                onClick={() => setShowUpload(!showUpload)} 
+                className="flex items-center gap-2 bg-gradient-to-r from-primary to-luxury"
+              >
+                <Plus className="w-4 h-4" />
+                {showUpload ? 'Hide Upload' : 'Upload Content'}
+              </Button>
             </div>
+
+            {showUpload && (
+              <ContentUpload onUploadComplete={() => {
+                setShowUpload(false);
+                fetchDashboardData();
+              }} />
+            )}
 
             <Card className="glass-effect">
               <CardContent className="p-6">
                 <div className="text-center text-muted-foreground">
                   <Upload className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No content uploaded yet. Start by uploading your first photo or video!</p>
+                  <p>No content uploaded yet. Start by uploading your first exclusive content!</p>
                 </div>
               </CardContent>
             </Card>
