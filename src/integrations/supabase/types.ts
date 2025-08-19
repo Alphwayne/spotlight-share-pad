@@ -347,6 +347,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_user: {
+        Args: {
+          user_email: string
+          user_password: string
+          user_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Json
+      }
       admin_delete_user: {
         Args: { target_user_id: string }
         Returns: Json
