@@ -146,22 +146,10 @@ const Preview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-luxury/5">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary via-luxury to-accent rounded-full flex items-center justify-center shadow-lg">
-              <Sparkles className="w-6 h-6 text-white animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-luxury to-accent bg-clip-text text-transparent">
-                Dirty Desire
-              </h1>
-              <p className="text-sm text-muted-foreground">Creator Preview</p>
-            </div>
-          </div>
-          
-          <Button onClick={() => navigate('/auth')} variant="outline">
+      {/* Minimal Header */}
+      <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
+        <div className="container mx-auto px-4 flex justify-end">
+          <Button onClick={() => navigate('/auth')} variant="outline" size="sm">
             Sign In
           </Button>
         </div>
@@ -170,78 +158,42 @@ const Preview = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Creator Profile Section */}
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Profile Header */}
-          <Card className="glass-effect border-primary/20 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/10 via-luxury/10 to-accent/10 p-6">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-24 h-24 ring-4 ring-white/20">
-                    <AvatarImage src={profile.profile_picture_url || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-luxury text-white text-xl">
-                      {profile.nickname?.[0] || profile.email[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Badge variant="outline" className="border-luxury text-luxury mb-2">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Premium Creator
-                    </Badge>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-luxury bg-clip-text text-transparent">
-                      {profile.nickname || 'Anonymous Creator'}
-                    </h1>
-                    <p className="text-muted-foreground flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      Creator since {new Date(profile.created_at).toLocaleDateString()}
+          {/* Creator Profile */}
+          <Card className="glass-effect border-primary/20 overflow-hidden backdrop-blur-md">
+            <div className="relative bg-gradient-to-br from-primary/20 via-luxury/15 to-accent/20 p-8">
+              <div className="absolute inset-0 bg-black/5"></div>
+              <div className="relative flex flex-col items-center text-center space-y-6">
+                <Avatar className="w-32 h-32 ring-4 ring-white/30 shadow-2xl">
+                  <AvatarImage src={profile.profile_picture_url || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-luxury text-white text-2xl">
+                    {profile.nickname?.[0] || profile.email[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="space-y-3">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-luxury to-accent bg-clip-text text-transparent">
+                    {profile.nickname || 'Anonymous Creator'}
+                  </h1>
+                  
+                  {profile.bio && (
+                    <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
+                      {profile.bio}
                     </p>
-                  </div>
+                  )}
                 </div>
                 
-                <div className="ml-auto">
-                  <Button 
-                    onClick={handleSubscribe}
-                    size="lg" 
-                    className="bg-gradient-to-r from-primary via-luxury to-accent hover:scale-105 transition-transform"
-                  >
-                    <Heart className="w-4 h-4 mr-2" />
-                    Subscribe for Full Access
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
+                <Button 
+                  onClick={handleSubscribe}
+                  size="lg" 
+                  className="bg-gradient-to-r from-primary via-luxury to-accent hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl px-8 py-3"
+                >
+                  <Heart className="w-5 h-5 mr-2" />
+                  Subscribe for Exclusive Content
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
               </div>
-              
-              {profile.bio && (
-                <div className="mt-6 p-4 bg-background/50 rounded-lg">
-                  <p className="text-muted-foreground">{profile.bio}</p>
-                </div>
-              )}
             </div>
           </Card>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="glass-effect border-primary/20 text-center">
-              <CardContent className="p-6">
-                <div className="text-3xl font-bold text-primary mb-2">{totalContent}</div>
-                <p className="text-sm text-muted-foreground">Exclusive Posts</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="glass-effect border-luxury/20 text-center">
-              <CardContent className="p-6">
-                <div className="text-3xl font-bold text-luxury mb-2">{previewContent.length}</div>
-                <p className="text-sm text-muted-foreground">Free Previews</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="glass-effect border-accent/20 text-center">
-              <CardContent className="p-6">
-                <div className="text-3xl font-bold text-accent mb-2">
-                  {previewContent.reduce((sum, content) => sum + (content.likes_count || 0), 0)}
-                </div>
-                <p className="text-sm text-muted-foreground">Total Likes</p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Preview Content */}
           <Card className="glass-effect">
