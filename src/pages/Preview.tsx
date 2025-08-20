@@ -120,7 +120,7 @@ const Preview = () => {
   };
 
   const handleSubscribe = () => {
-    navigate('/auth', { state: { subscribeTo: profile?.id } });
+    navigate(`/subscribe/${linkCode}`);
   };
 
   if (loading) {

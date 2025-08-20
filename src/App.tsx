@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PasswordChange from "./pages/PasswordChange";
 import Preview from "./pages/Preview";
+import PaymentFlow from "./pages/PaymentFlow";
+import PaymentCallback from "./pages/PaymentCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/password-change" element={<PasswordChange />} />
             <Route path="/preview/:linkCode" element={<Preview />} />
+            <Route path="/subscribe/:linkCode" element={<PaymentFlow />} />
+            <Route path="/payment-callback" element={<PaymentCallback />} />
             <Route 
               path="/" 
               element={

@@ -39,31 +39,39 @@ serve(async (req) => {
       throw new Error("Subscriber profile not found");
     }
 
-    // Initialize Payaza payment
-    const payazaResponse = await fetch("https://api.payaza.africa/live/checkout", {
+    // Initialize Flutterwave payment
+    const transactionRef = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const flutterwaveResponse = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
-        "Authorization": `Payaza ${Deno.env.get("PAYAZA_SECRET_KEY")}`,
+        "Authorization": `Bearer ${Deno.env.get("FLUTTERWAVE_SECRET_KEY")}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        service_type: "Account",
-        service_payload: {
-          first_name: user.user_metadata?.first_name || "User",
-          last_name: user.user_metadata?.last_name || "Subscriber",
-          email_address: user.email,
-          phone_number: user.user_metadata?.phone || "",
-          amount: amount,
-          transaction_reference: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          currency: "NGN",
-          callback_url: `${req.headers.get("origin")}/payment-callback`,
+        tx_ref: transactionRef,
+        amount: amount,
+        currency: "USD",
+        redirect_url: `${req.headers.get("origin")}/payment-callback`,
+        customer: {
+          email: user.email,
+          name: user.user_metadata?.full_name || user.user_metadata?.first_name || "User",
         },
+        customizations: {
+          title: "Premium Content Subscription",
+          description: "Monthly subscription to premium content",
+          logo: "https://your-logo-url.com/logo.png"
+        },
+        meta: {
+          owner_id: owner_id,
+          subscriber_id: subscriberProfile.id
+        }
       }),
     });
 
-    const payazaData = await payazaResponse.json();
+    const flutterwaveData = await flutterwaveResponse.json();
 
-    if (!payazaData.success) {
+    if (flutterwaveData.status !== "success") {
       throw new Error("Failed to create payment session");
     }
 
@@ -74,7 +82,7 @@ serve(async (req) => {
         owner_id,
         subscriber_id: subscriberProfile.id,
         amount_paid: amount,
-        payment_reference: payazaData.data.reference,
+        payment_reference: transactionRef,
         status: 'pending'
       })
       .select()
@@ -82,9 +90,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        checkout_url: payazaData.data.checkout_url,
+        checkout_url: flutterwaveData.data.link,
         subscription_id: subscription?.id,
-        reference: payazaData.data.reference
+        reference: transactionRef
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -92,6 +100,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Create subscription error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

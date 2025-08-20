@@ -20,18 +20,18 @@ serve(async (req) => {
 
     const { reference } = await req.json();
 
-    // Verify payment with Payaza
-    const verifyResponse = await fetch(`https://api.payaza.africa/live/transaction/verify/${reference}`, {
+    // Verify payment with Flutterwave
+    const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${reference}`, {
       method: "GET",
       headers: {
-        "Authorization": `Payaza ${Deno.env.get("PAYAZA_SECRET_KEY")}`,
+        "Authorization": `Bearer ${Deno.env.get("FLUTTERWAVE_SECRET_KEY")}`,
         "Content-Type": "application/json",
       },
     });
 
     const verifyData = await verifyResponse.json();
 
-    if (!verifyData.success || verifyData.data.status !== "successful") {
+    if (verifyData.status !== "success" || verifyData.data.status !== "successful") {
       throw new Error("Payment verification failed");
     }
 
@@ -76,6 +76,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Verify payment error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
