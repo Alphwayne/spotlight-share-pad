@@ -374,6 +374,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      is_owner_or_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       content_type: "image" | "video" | "audio" | "document"
