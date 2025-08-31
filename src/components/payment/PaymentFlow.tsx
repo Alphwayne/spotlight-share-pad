@@ -29,13 +29,43 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [amount, setAmount] = useState('10.00');
+  const [subscriptionAmount, setSubscriptionAmount] = useState(10000);
   const [paymentReference, setPaymentReference] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'none' | 'pending' | 'active'>('none');
 
   useEffect(() => {
     checkExistingSubscription();
+    fetchSubscriptionAmount();
   }, [creator.id, profile]);
+
+  const fetchSubscriptionAmount = async () => {
+    try {
+      // First try to get creator-specific setting
+      const { data: creatorSetting } = await supabase
+        .from('subscription_settings')
+        .select('amount')
+        .eq('creator_id', creator.id)
+        .single();
+
+      if (creatorSetting) {
+        setSubscriptionAmount(creatorSetting.amount);
+        return;
+      }
+
+      // Fallback to global setting
+      const { data: globalSetting } = await supabase
+        .from('subscription_settings')
+        .select('amount')
+        .eq('is_global', true)
+        .single();
+
+      if (globalSetting) {
+        setSubscriptionAmount(globalSetting.amount);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription amount:', error);
+    }
+  };
 
   const checkExistingSubscription = async () => {
     if (!profile) return;
@@ -73,7 +103,7 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({
       const { data, error } = await supabase.functions.invoke('create-subscription', {
         body: {
           owner_id: creator.id,
-          amount: parseFloat(amount)
+          amount: subscriptionAmount
         }
       });
 
@@ -214,16 +244,19 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Subscription Amount (USD)</Label>
+            <Label htmlFor="amount">Subscription Amount (₦)</Label>
             <Input
               id="amount"
               type="number"
-              step="0.01"
-              min="1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="10.00"
+              step="1000"
+              min="1000"
+              value={subscriptionAmount}
+              onChange={(e) => setSubscriptionAmount(Number(e.target.value))}
+              placeholder="10000"
             />
+            <p className="text-sm text-muted-foreground">
+              Creator receives ₦{(subscriptionAmount * 0.7).toLocaleString()} (70%)
+            </p>
           </div>
 
           <div className="bg-primary/5 p-4 rounded-lg space-y-2">
@@ -281,7 +314,7 @@ export const PaymentFlow: React.FC<PaymentFlowProps> = ({
               ) : (
                 <>
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Subscribe for ${amount}
+                  Subscribe for ₦{subscriptionAmount.toLocaleString()}
                 </>
               )}
             </Button>
